@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+# Add below lines as needed for virtualenv, test, build output, or local editor config
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.env
+.pytest_cache/
+.mypy_cache/
+.cache
+.idea/
+.vscode/
