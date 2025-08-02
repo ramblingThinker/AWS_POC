@@ -1,6 +1,7 @@
 # s3_manager.py
 import boto3
 import logging
+from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 from typing import Dict, List, Any, Optional
 from fastapi import HTTPException, status
@@ -14,14 +15,14 @@ class S3Manager:
     """
     # Define instance variables with type hints
     region_name: str
-    _s3_client: boto3.client
+    _s3_client: BaseClient
 
     def __init__(self, aws_access_key_id: str, aws_secret_access_key: str, region_name: str, aws_session_token: Optional[str] = None):
         self.region_name = region_name
         self._s3_client = self._initialize_s3_client(
             aws_access_key_id, aws_secret_access_key, aws_session_token)
 
-    def _initialize_s3_client(self, access_key: str, secret_key: str, session_token: Optional[str] = None) -> boto3.client:
+    def _initialize_s3_client(self, access_key: str, secret_key: str, session_token: Optional[str] = None) -> BaseClient:
         """Initializes and returns an S3 client."""
         s3_client_kwargs: Dict[str, Any] = {  # Added type hint for s3_client_kwargs
             'aws_access_key_id': access_key,

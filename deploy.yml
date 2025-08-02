@@ -1,0 +1,51 @@
+name: Deploy to RHEL 9 Server (Nginx)
+
+on:
+  push:
+    branches: [ "main" ] # Trigger deployment only on pushes to the main branch
+
+env:
+  APP_DIR: /home/app-user/app      # Directory for your app on the server
+  SERVICE_NAME: fastapi_app      # Name of the systemd service
+  ARTIFACT_NAME: app.tar.gz      # Name of the packaged artifact
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Package application source code
+        # Exclude git history and other unnecessary files from the package
+        run: tar --exclude='./.git' --exclude='./.github' -czf ${{ env.ARTIFACT_NAME }} .
+
+      - name: Copy package to server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: ${{ env.ARTIFACT_NAME }}
+          target: /tmp/
+
+      - name: Execute deployment on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e # Exit immediately if a command fails
+            sudo mkdir -p ${{ env.APP_DIR }}
+            sudo tar -xzf /tmp/${{ env.ARTIFACT_NAME }} -C ${{ env.APP_DIR }}
+            sudo chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} ${{ env.APP_DIR }}
+            cd ${{ env.APP_DIR }}
+            sudo -u ${{ secrets.SERVER_USER }} bash -c 'python3 -m venv venv && source venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt'
+            sudo systemctl restart ${{ env.SERVICE_NAME }}
+            rm /tmp/${{ env.ARTIFACT_NAME }}
+            echo "Deployment to RHEL 9 with Nginx completed successfully!"
+

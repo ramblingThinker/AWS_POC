@@ -65,10 +65,12 @@ async def lifespan(app: FastAPI):
     logger.info("Application lifespan: Startup initiated.")
 
     try:
+        if not VAULT_SERVICE_TOKEN:
+            raise ValueError("VAULT_SERVICE_TOKEN environment variable is not set. Cannot start application.")
+
         # Initialize VaultClient
         vault_client_instance = VaultClient(
             vault_addr=VAULT_ADDR,
-            # type: ignore # Mypy might complain here if VAULT_SERVICE_TOKEN is Optional[str] but VaultClient expects str
             vault_token=VAULT_SERVICE_TOKEN,
             vault_mount=AWS_CREDS_VAULT_MOUNT,
             vault_path=AWS_CREDS_VAULT_KV_PATH
