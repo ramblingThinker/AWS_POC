@@ -5,7 +5,7 @@ on:
     branches: [ "master" ] # Trigger deployment only on pushes to the main branch
 
 env:
-  APP_DIR: /home/app-user/app      # Directory for your app on the server
+  APP_DIR: /home/deploy_user/app      # Directory for your app on the server
   SERVICE_NAME: fastapi_app      # Name of the systemd service
   ARTIFACT_NAME: app.tar.gz      # Name of the packaged artifact
 
