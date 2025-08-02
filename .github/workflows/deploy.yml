@@ -21,7 +21,15 @@ jobs:
 
       - name: Package application source code
         # Exclude git history and other unnecessary files from the package
-        run: tar --exclude='./.git' --exclude='./.github' --warning=no-file-changed -czf ${{ env.ARTIFACT_NAME }} .
+        run: |
+          tar --exclude='./.git' \
+              --exclude='./.github' \
+              --exclude='./.venv' \
+              --exclude='__pycache__' \
+              --exclude='*.pyc' \
+              --warning=no-file-changed \
+              --ignore-failed-read \
+              -czf ${{ env.ARTIFACT_NAME }} .
 
       - name: Copy package to server
         uses: appleboy/scp-action@v0.1.4
