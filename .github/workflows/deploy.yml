@@ -14,13 +14,13 @@ permissions:
 
 jobs:
   deploy:
+    name: Deploy FastAPI Backend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Package application source code
-        # Exclude git history and other unnecessary files from the package
+      - name: Archive project files
         run: |
           tar --exclude='./.git' \
               --exclude='./.github' \
@@ -29,7 +29,7 @@ jobs:
               --exclude='*.pyc' \
               --warning=no-file-changed \
               --ignore-failed-read \
-              -czf ${{ env.ARTIFACT_NAME }} .
+              -czf "${{ env.ARTIFACT_NAME }}" .
 
       - name: Copy package to server
         uses: appleboy/scp-action@v0.1.4
@@ -47,17 +47,23 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            set -e # Exit immediately if a command fails
-            sudo mkdir -p ${{ env.APP_DIR }}
-            sudo tar -xzf /tmp/${{ env.ARTIFACT_NAME }} -C ${{ env.APP_DIR }}
-            sudo chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} ${{ env.APP_DIR }}
-            cd ${{ env.APP_DIR }}
+            set -e
+
+            echo "Deploying to ${{ env.APP_DIR }} on server..."
+
+            sudo mkdir -p "${{ env.APP_DIR }}"
+            sudo tar -xzf "/tmp/${{ env.ARTIFACT_NAME }}" -C "${{ env.APP_DIR }}"
+            sudo chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} "${{ env.APP_DIR }}"
+
+            cd "${{ env.APP_DIR }}"
             sudo -u ${{ secrets.SERVER_USER }} bash -c '
-              python3 -m venv venv || virtualenv venv
+              if [ ! -d "venv" ]; then python3 -m venv venv; fi
               source venv/bin/activate
               pip install --upgrade pip
-              pip install -r requirements.txt
+              pip install -r requirements.txt --no-cache-dir
             '
-            sudo systemctl restart ${{ env.SERVICE_NAME }}
-            rm /tmp/${{ env.ARTIFACT_NAME }}
-            echo "Deployment to RHEL 9 with Nginx completed successfully!"
+
+            sudo systemctl restart "${{ env.SERVICE_NAME }}"
+            rm -f "/tmp/${{ env.ARTIFACT_NAME }}"
+
+            echo "✅ Deployment completed successfully."

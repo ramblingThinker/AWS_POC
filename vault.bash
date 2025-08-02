@@ -34,7 +34,7 @@ echo ""
 
 # --- Step 3: Write a secret to the KV v2 engine ---
 echo "--- Writing secret to 'secrets/aws/credentials' ---"
-vault kv put secrets/aws/credentials access_key="********" secret_access_key="********"
+vault kv put secrets/aws/credentials access_key="****" secret_access_key="*****"
 if [ $? -ne 0 ]; then
     echo "Error: Failed to write secret. Exiting."
     exit 1
