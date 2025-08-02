@@ -19,6 +19,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Ensure required packages on RHEL 9 server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            sudo dnf install -y python3 python3-pip python3-virtualenv
+
       - name: Package application source code
         # Exclude git history and other unnecessary files from the package
         run: tar --exclude='./.git' --exclude='./.github' -czf ${{ env.ARTIFACT_NAME }} .
@@ -44,8 +53,12 @@ jobs:
             sudo tar -xzf /tmp/${{ env.ARTIFACT_NAME }} -C ${{ env.APP_DIR }}
             sudo chown -R ${{ secrets.SERVER_USER }}:${{ secrets.SERVER_USER }} ${{ env.APP_DIR }}
             cd ${{ env.APP_DIR }}
-            sudo -u ${{ secrets.SERVER_USER }} bash -c 'python3 -m venv venv && source venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt'
+            sudo -u ${{ secrets.SERVER_USER }} bash -c '
+              python3 -m venv venv || virtualenv venv
+              source venv/bin/activate
+              pip install --upgrade pip
+              pip install -r requirements.txt
+            '
             sudo systemctl restart ${{ env.SERVICE_NAME }}
             rm /tmp/${{ env.ARTIFACT_NAME }}
             echo "Deployment to RHEL 9 with Nginx completed successfully!"
-
