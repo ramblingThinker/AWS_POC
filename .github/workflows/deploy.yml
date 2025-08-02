@@ -2,7 +2,7 @@ name: Deploy to RHEL 9 Server (Nginx)
 
 on:
   push:
-    branches: [ "main" ] # Trigger deployment only on pushes to the main branch
+    branches: [ "master" ] # Trigger deployment only on pushes to the main branch
 
 env:
   APP_DIR: /home/app-user/app      # Directory for your app on the server
